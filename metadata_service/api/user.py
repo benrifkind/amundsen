@@ -34,7 +34,7 @@ class UserDetailAPI(BaseAPI):
     def get(self, *, id: Optional[str] = None) -> Iterable[Union[Mapping, int, None]]:
         if app.config['USER_DETAIL_METHOD']:
             try:
-                user_data = app.config['USER_DETAIL_METHOD'](id)
+                user_data = app.config['USER_DETAIL_METHOD'](app, id)
                 return UserSchema().dump(user_data).data, HTTPStatus.OK
             except Exception:
                 LOGGER.exception('UserDetailAPI GET Failed - Using "USER_DETAIL_METHOD" config variable')
