@@ -1,0 +1,70 @@
+version: '3'
+services:
+  neo4j:
+      image: neo4j:3.3.0
+      container_name: neo4j_amundsen
+      networks:
+        - amundsennet
+      environment:
+        - NEO4J_AUTH=neo4j/test
+      ulimits:
+        nofile:
+          soft: 40000
+          hard: 40000
+      ports:
+          - 7474:7474
+          - 7687:7687
+      volumes:
+          - ./example/docker/neo4j/conf:/conf
+          - ./.local/neo4j/data:/neo4j/data
+  amundsensearch:
+      image: amundsendev/amundsen-search:2.4.1
+      container_name: amundsensearch
+      ports:
+        - 5001:5001
+      networks:
+        - amundsennet
+      environment:
+        - PROXY_ENDPOINT=https://vpc-amundsen-test-xyf4g67gpablblhaetxa3iv42e.us-west-2.es.amazonaws.com:443
+        - CREDENTIALS_PROXY_USER=
+        - CREDENTIALS_PROXY_PASSWORD=
+  amundsenmetadata:
+    image: 771945457201.dkr.ecr.us-east-1.amazonaws.com/amundsen/amundsen-metadata:3.0.0
+    container_name: amundsenmetadata
+    depends_on:
+      - neo4j
+    ports:
+      - 5002:5002
+    networks:
+      - amundsennet
+    environment:
+      - PROXY_HOST=bolt://neo4j_amundsen
+      - FLASK_APP_MODULE_NAME=flaskoidc
+      - FLASK_APP_CLASS_NAME=FlaskOIDC
+      - OIDC_CLIENT_SECRETS=/app/client_secrets.json
+      - OIDC_CALLBACK_ROUTE=/authorization-code/callback
+    volumes:
+      - /tmp/client_secrets.json:/app/client_secrets.json
+  amundsenfrontend:
+      image: 771945457201.dkr.ecr.us-east-1.amazonaws.com/amundsen/amundsen-frontend:3.0.0
+      container_name: amundsenfrontend
+      depends_on:
+        - amundsenmetadata
+        - amundsensearch
+      ports:
+        - 5000:5000
+      networks:
+        - amundsennet
+      environment:
+        - SEARCHSERVICE_BASE=http://amundsensearch:5001
+        - METADATASERVICE_BASE=http://amundsenmetadata:5002
+        - APP_WRAPPER=flaskoidc
+        - APP_WRAPPER_CLASS=FlaskOIDC
+        - OIDC_CLIENT_SECRETS=/app/client_secrets.json
+        - OIDC_CALLBACK_ROUTE=/authorization-code/callback
+        - FRONTEND_SVC_CONFIG_MODULE_CLASS=amundsen_application.oidc_config.OidcConfig
+      volumes:
+        - /tmp/client_secrets.json:/app/client_secrets.json
+
+networks:
+  amundsennet:

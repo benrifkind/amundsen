@@ -62,6 +62,16 @@ search:
   ##
   elasticsearchEndpoint:
   ##
+  ## search.elasticSearchUser -- The name of the elasticsearch user
+  ##
+  elasticSearchUser: 'elastic'
+  ##
+  ## search.elasticSearchPassword -- The name of the elasticsearch password
+  ##
+  elasticSearchPassword: 'elastic'
+  ##
+  ## search.image -- The image of the search container.
+  ##
   ## search.image -- The image of the search container.
   ##
   image: amundsendev/amundsen-search
