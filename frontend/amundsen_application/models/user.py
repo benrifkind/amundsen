@@ -28,6 +28,8 @@ def load_user(user_data: Dict) -> User:
         # in the user metadata.
         if _str_no_value(user_data.get('profile_url')) and app.config['GET_PROFILE_URL']:
             user_data['profile_url'] = app.config['GET_PROFILE_URL'](user_data['user_id'])
+        bad_keys = ['ver', 'sub', 'at_hash', 'amr', 'aud', 'iat', 'jti', 'idp', 'auth_time', 'exp', 'iss']
+        user_data = {k: v for k, v in user_data.items() if k not in bad_keys}
         return schema.load(user_data)
     except ValidationError as err:
         return err.messages
